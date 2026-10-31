@@ -1,0 +1,8 @@
+# Verified against the versions this project is developed on.
+torch>=2.9.1          # 2.9+ required for the Apple Metal (MPS) code path
+numpy>=1.26.4,<2.0
+scipy>=1.16.2
+PyYAML>=6.0.3
+tqdm>=4.67.1
+torchvision>=0.24.1   # only needed by models/lightgcn_image.py
+pytest>=8.3.4         # tests

@@ -1,0 +1,377 @@
+\documentclass[runningheads]{llncs}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,booktabs,graphicx}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdfauthor={Shayan Bemanian}}
+\input{generated/results_rows.tex}
+\input{generated/effect_rows.tex}
+\input{generated/sensitivity_rows.tex}
+\input{generated/focused_main_rows.tex}
+\input{generated/focused_effect_rows.tex}
+\input{generated/patience_rows.tex}
+\title{Revisiting RLMRec: User-Profile Alignment, Early Stopping, and Reproducibility}
+\titlerunning{Revisiting RLMRec}
+\author{Shayan Bemanian}
+\authorrunning{Shayan Bemanian}
+\institute{}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We reproduce selected released-code behavior and study the user loss in
+RLMRec-Con with a LightGCN backbone on
+Amazon-book, Yelp and Steam. Removing it changes mean test Recall@20 by
+$-0.00027$, $-0.00015$ and $-0.00139$ over five paired seeds. Both full and
+item-only objectives outperform the collaborative baseline; only Steam
+provides paired $t$-test evidence of a user-term benefit after multiplicity
+adjustment. The other intervals do not establish equivalence. A diagnostic
+explains a much larger apparent effect on Yelp: longer patience lets the full
+model recover from about $0.038$ to $0.116$ validation Recall@20. Fixed-seed
+repeats also vary on the scale of the small Amazon mean contrast. This
+objective-level ablation identifies a conditional user-term benefit and shows
+how premature stopping can exaggerate an apparent benefit from its removal.
+
+\keywords{Recommendation \and Language models \and Reproducibility \and Ablation studies}
+\end{abstract}
+
+\section{Introduction}
+RLMRec aligns collaborative representations with generated
+user and item profiles~\cite{rlmrec}. An improvement from this combined
+objective does not establish how much each alignment term contributes.
+Separating their effects matters when choosing whether a recommender needs a
+user-profile generation pipeline in addition to item semantics.
+
+The original RLMRec ablation (Section 4.3) examines shuffled semantic
+representations and alternative text encoders~\cite{rlmrec}. It does not
+report our intervention: deleting the user-alignment loss while keeping the
+item losses and released embeddings fixed. Corrupting semantic targets and
+removing one loss answer different questions. The former tests the relevance
+of semantic correspondence; the latter tests a term's marginal contribution.
+
+We test this intervention on three benchmarks and diagnose a high-weight
+Yelp failure using longer patience. Fixed-seed repeats check numerical
+repeatability. The contribution is an objective ablation that separates a
+conditional user-term benefit from a stopping artifact. This retrospective
+study does not propose a new state-of-the-art model.
+
+\section{Context and Compared Objectives}
+LightGCN propagates ID embeddings over the interaction graph~\cite{lightgcn}.
+RLMRec adds alignment to generated profiles~\cite{rlmrec}. AlphaRec already
+shows that item language representations can support recommendation and
+examines alternative RLMRec inputs~\cite{alpharec}; our intervention instead
+keeps the released inputs fixed and deletes one alignment term. An earlier
+FREEDOM-inspired graph recipe~\cite{freedom}, which changes several components
+at once, is retained only in the supporting artifact.
+
+Let a training batch contain $B$ triples $(u,i,j)$, with observed item $i$ and
+an item $j$ sampled outside that user's training history. With collaborative
+embeddings $h$ and score $\hat y_{ui}=h_u^\top h_i$, the averaged BPR loss is
+\begin{equation}
+ \overline{\mathcal L}_{\rm BPR}=\frac{1}{B}\sum_{(u,i,j)}
+ \operatorname{softplus}(\hat y_{uj}-\hat y_{ui}).
+\end{equation}
+A shared two-layer MLP $g$ maps frozen 1536-dimensional semantic vectors into
+the collaborative dimension. Write $\overline{\mathcal L}_u$,
+$\overline{\mathcal L}_{i^+}$ and $\overline{\mathcal L}_{i^-}$ for the
+batch-averaged cosine InfoNCE losses on users, positive items and negative
+items, respectively. Following the released code, each user target is
+contrasted against all projected user profiles; the two item losses use their
+respective in-batch item targets. Repeated items are retained in the batch.
+Then the full and item-only objectives are
+\begin{align}
+ \mathcal L_{\rm full}&=\overline{\mathcal L}_{\rm BPR}
+ +\alpha(\overline{\mathcal L}_u+\overline{\mathcal L}_{i^+}
+ +\overline{\mathcal L}_{i^-})+\beta\|\Theta\|_2^2,\\
+ \mathcal L_{\rm item}&=\overline{\mathcal L}_{\rm BPR}
+ +\alpha(\overline{\mathcal L}_{i^+}+\overline{\mathcal L}_{i^-})
+ +\beta\|\Theta\|_2^2.
+\end{align}
+Deleting $\overline{\mathcal L}_u$ leaves the other coefficients unchanged.
+It reduces total alignment pressure and changes the shared projector's
+supervision, so this is not a comparison at matched total regularization.
+Both RLMRec variants retain the released sum of layers 0 through 3, dropout
+without survivor rescaling and squared parameter regularization. Cached
+embeddings are invalidated before evaluation and after checkpoint restoration.
+
+
+\section{Reproduction Scope and Process}
+\paragraph{Why this system.}
+RLMRec provides a concrete instance of a widely applicable design question:
+how should generated semantic profiles supervise collaborative recommendation?
+Its released interactions, semantic vectors and LightGCN implementation allow
+us to hold the inputs fixed while separating the user and item alignment
+terms. We focus on RLMRec-Con with this backbone. We do not reproduce every
+backbone, augmentation variant or original-paper experiment, and do not claim
+numerical equality with its published tables. The contribution is a
+released-code reproduction with an objective-level extension and a diagnosis
+of implementation and stopping choices that affect its interpretation.
+
+\paragraph{Questions and evidence.}
+We ask whether removing only user alignment preserves the measured semantic
+gain, whether that contrast is stable across three released benchmarks, and
+whether an apparent large loss difference survives a longer stopping budget.
+A fourth question concerns execution repeatability at a fixed seed. These
+questions require different evidence: five paired seeds for main model
+contrasts, validation-only runs for the stopping diagnosis, and repeated
+executions of one fixed setting for numerical repeatability. We keep those
+samples separate rather than pooling them as additional independent seeds.
+
+\paragraph{Reconstructing the implementation.}
+The local audit identifies the RLMRec release at commit
+\texttt{22413752246de3dee8ab0d509f7f7a8889080f95}. The important reconstruction
+choices are the released sum readout, edge dropout without survivor rescaling,
+global squared parameter regularization, and the distinct user and item
+contrastive candidate sets. Earlier local LightGCN variants used different
+readouts or regularization and are excluded from the main comparison.
+Agreement on a model name is therefore insufficient to establish that two
+experiments use the same objective or propagation operator.
+
+The local implementation invalidates its embedding cache before evaluation
+and after restoring a checkpoint. Otherwise evaluation may use embeddings
+computed from earlier weights. This is a deliberate implementation correction,
+not an additional model component; we do not have a controlled benchmark
+estimate of its isolated effect on accuracy. The tests cover the retained
+objective, model wiring, graph operators and cache behavior. Passing them
+supports these implementation properties rather than establishing equality
+with every upstream training outcome.
+
+\paragraph{Changes and acquisition limits.}
+We reuse the supplied semantic vectors rather than regenerating profiles.
+Training uses Apple MPS, with a gather/scatter implementation of sparse
+propagation. Dataset-specific batches and stopping budgets are stated below;
+they are changes in experimental setup that limit a strict replication claim.
+The evidence package records public-source and local-file audits, but no
+upstream-author correspondence. We cannot infer that undocumented details
+were confirmed by the original authors. Nor have we byte-compared these local
+inputs with a newly downloaded complete release.
+
+\paragraph{What can be reproduced from the package.}
+The artifact supports three progressively stronger checks. First, a reader
+can verify file fingerprints and recalculate every reported main contrast
+from frozen JSON results without raw data or accelerator hardware. Second,
+with the released inputs installed, the reader can verify split disjointness,
+array shapes and input fingerprints. Third, the training entry point reruns a
+selected manifest configuration into a separate output directory. A two-epoch
+smoke run exercises the pipeline but is not a reproduction of the scientific
+result. Identical seeds do not guarantee identical MPS outcomes.
+
+The main manifest fixes 60 runs: four models, three datasets and five seeds.
+This paper reports 45 of them, omitting the graph-recipe comparison from its
+main tables while retaining it in the multiplicity family and artifact.
+The package also includes all twelve weight-grid cells and twelve diagnostic
+executions. Only the weight grid has a fully preserved pre-run source snapshot;
+source digests for earlier and later runs do not recover missing source bytes.
+This distinction prevents table reproducibility from being mistaken for a
+complete reconstruction of every historical execution.
+
+\section{Experimental Design}
+\paragraph{Inputs and ranking.}
+We reuse RLMRec's released interactions and semantic embeddings. Amazon-book
+contains 11,000 users, 9,332 items and 120,464 training, 40,290 validation and
+40,106 test interactions. Yelp contains 11,091 users, 11,010 items
+and 166,620 training, 55,479 validation and 55,436 test interactions.
+Steam contains 23,310 users, 5,237 items and 316,190/104,897/104,835
+training/validation/test interactions. We verified that the split matrices
+have disjoint nonzero pairs and that the semantic inputs have the expected
+dimensions and finite values. Collaborative adjacency uses training data only.
+All-ranking evaluation masks training positives; validation positives remain
+eligible test candidates. Recall and NDCG are macro-averaged over users with
+positives in the evaluated split.
+
+We cannot verify a complete split-filtered generation history for every
+released semantic profile. The upstream examples use GPT-3.5-turbo and
+text-embedding-ada-002, but examples are not authenticated generation logs for
+the full release. Our results are conditional on these fixed semantic inputs;
+disjoint interaction splits alone do not certify absence of information
+contamination in upstream text generation.
+
+\paragraph{Configurations and selection.}
+All runs use Apple MPS. Compared models use 32-dimensional collaborative embeddings, three
+collaborative layers, Adam with learning rate $10^{-3}$ and no optimizer
+weight decay. Full and item-only RLMRec share $\alpha=0.01$, temperature
+$0.2$, keep rate $0.8$ and $\beta=10^{-7}$. Batch sizes are 1024 for Amazon
+and 4096 for Yelp and Steam, fixed within each dataset. Consequently, cross-dataset
+behavior is not an isolated effect of dataset identity. The semantic models
+have 1,880,752 trainable parameters on Amazon and 1,937,360 on Yelp.
+
+We evaluate validation Recall@20 every three epochs and restore its best
+checkpoint before a single final test evaluation per run. Patience is five
+non-improving evaluations for Amazon and Yelp and 25 for Steam. Steam is a
+later extension with a longer stopping budget, not an identical-protocol
+replication across datasets. The five paired seeds are 1, 7, 13, 42 and 2024.
+All 45 runs in the three-model comparison stopped early rather than hitting
+a time or epoch cap. Existing development and test results informed this
+retrospective study; its framing is not preregistered.
+
+\paragraph{Uncertainty and sensitivity.}
+We report sample standard deviations and paired 95\% Student-$t$ intervals
+across the five seeds, with paired $t$-tests and exhaustive two-sided sign-flip
+checks. Holm adjustment covers twelve contrasts per metric: full and item-only
+versus the baseline, and item-only and the archived graph recipe versus full,
+on each of three datasets. Intervals are pointwise, not multiplicity-adjusted.
+The family includes the archived comparisons even though they are omitted
+from the main tables. Five seeds quantify run variation on fixed inputs,
+not uncertainty across populations; no equivalence margin was selected.
+
+The original validation-only grid runs full and item-only RLMRec at
+$\alpha\in\{0.003,0.01,0.03\}$ on development seed 2023 for Amazon and Yelp.
+All twelve cells are retained. To diagnose the high-weight Yelp result, four
+additional runs use $\alpha=0.03$, patience 20 and seeds 2023 and 2025, with
+other settings unchanged. They evaluate no test metrics. This follow-up is
+motivated by the observed failure and is not a new unbiased test comparison.
+
+Separately, each RLMRec variant was executed four times at the fixed Amazon
+setting $\alpha=0.01$, seed 42 and patience five. Each repeat reports its
+validation-selected test score. These eight executions measure repeatability;
+they are not added to the five-seed sample or used to select a configuration.
+
+\section{Results}
+\begin{table}[t]
+\caption{Test metrics at 20, mean $\pm$ sample SD over five seeds. All model
+comparisons are matched within a dataset.}
+\label{tab:main}
+\centering\small
+\begin{tabular}{llrr}
+\toprule Dataset & Model & Recall@20 & NDCG@20\\\midrule
+\PublicationFocusedMainRows
+\bottomrule\end{tabular}
+\end{table}
+
+\paragraph{Marginal contribution of user alignment.}
+Full and item-only RLMRec improve on the collaborative baseline on every
+dataset (Table~\ref{tab:main}); all six paired $t$ comparisons survive Holm
+adjustment, with adjusted $p\leq0.020$. The item-only gains in Recall@20 are
+$0.00760$, $0.00959$ and $0.00907$ on Amazon, Yelp and Steam. These gains show
+that a semantic objective without the user term can be effective in this
+implementation. They do not assign all of full RLMRec's benefit to item
+information: the objectives share a projector and differ in total loss weight.
+
+For Amazon and Yelp, Table~\ref{tab:effects} reports changes of $-0.000266$ and $-0.000151$. Their pointwise
+intervals span zero but admit losses as large as approximately 1.25\% and
+2.08\% of full RLMRec's mean; neither establishes practical equivalence.
+On Steam the change is $-0.001390$ (about $-0.98\%$ relative), with a
+pointwise interval excluding zero and Holm-adjusted paired $t$ value
+$p=0.0419$. Thus the data include a setting where user alignment helps.
+With only five pairs, the exact sign-flip test cannot attain a two-sided
+value below $0.0625$; the Steam inference depends on the parametric test.
+The inference is restricted to the tested Steam protocol.
+
+\begin{table}[t]
+\caption{Item-only minus full RLMRec, test Recall@20. Pointwise 95\% paired
+$t$ intervals; $p_h$ is Holm-adjusted across twelve contrasts per metric and
+$p_s$ is the exact two-sided sign-flip value.}
+\label{tab:effects}\centering\small
+\begin{tabular}{lrrrr}
+\toprule Dataset & Difference & 95\% $t$ interval & $p_h$ & $p_s$\\\midrule
+\PublicationFocusedEffectRows
+\bottomrule\end{tabular}
+\end{table}
+
+\paragraph{Alignment strength.}
+\input{generated/sensitivity_discussion.tex}
+
+
+
+\subsection{Diagnosing early stopping}
+\label{sec:stopping}
+Under patience 20, full RLMRec at Yelp $\alpha=0.03$ reaches validation
+Recall@20 of $0.11587$ and $0.11605$ on seeds 2023 and 2025. Item-only reaches
+$0.11866$ and $0.11991$ (Table~\ref{tab:patience}). The original seed-2023
+short-patience gap was $0.08085$; the long-patience follow-up gap is $0.00280$.
+Full RLMRec still trails, but the severe apparent collapse does not persist.
+
+The trajectories explain why (Figure~\ref{fig:patience}). Both full-model
+runs initially fall below their epoch-0 validation values. Replaying the
+five-check stopping rule on their logged validation values would stop both
+at epoch index 15, before recovery; with more patience, their best epochs
+are 84 and 72. The logs round Recall@20 to four decimals, so replay is an
+approximation, although these early deficits are much larger than rounding.
+This within-trajectory check avoids assuming that the original and repeated
+MPS runs are bitwise identical. It supports premature stopping as the cause
+of the severe low-score outcome, without identifying its optimization cause.
+
+\begin{table}[t]
+\caption{Yelp $\alpha=0.03$, patience 20. Validation Recall@20 and best epoch
+indices. These runs never evaluate the test set.}
+\label{tab:patience}\centering\small
+\begin{tabular}{rrrrr}
+\toprule Seed & Full & Item-only & Full epoch & Item epoch\\\midrule
+\PublicationPatienceRows
+\bottomrule\end{tabular}
+\end{table}
+\begin{figure}[t]
+\centering\includegraphics[width=\textwidth]{generated/patience_curves.png}
+\caption{Long-patience validation trajectories. Dotted lines mark epoch 15,
+where the five-check rule would stop each full-model trajectory.}
+\label{fig:patience}
+\end{figure}
+
+\subsection{Fixed-seed repeatability}
+\label{sec:resolution}
+The four Amazon repeats have test Recall@20 SD $0.000536$ for full RLMRec
+and $0.000344$ for item-only, with ranges $0.001090$ and $0.000810$.
+Full-model selected epoch indices are 66, 78, 66 and 72; item-only selects
+66 in all four executions. Execution variation is therefore present even
+when checkpoint epoch is unchanged. Both SDs exceed the absolute Amazon
+five-seed mean contrast of $0.000266$.
+
+This observation cautions against interpreting the small Amazon point
+estimate precisely. It does not invalidate pairing, establish a universal
+detection threshold, or prove that the observed variation is caused solely
+by MPS scatter operations. Four repeats at one seed cannot decompose
+execution and initialization variance or be transferred to Yelp and Steam.
+The primary uncertainty estimates remain the paired seed intervals.
+
+\section{Implications and Limitations}
+The combined evidence supports a specific practical conclusion: evaluate the
+user term separately and inspect stopping trajectories before interpreting a
+large ablation gap. Semantic augmentation helps without user alignment in
+all three tested settings, but Steam shows a measurable incremental user-term
+benefit under the paired $t$ analysis. The high-weight Yelp result demonstrates
+how stopping can greatly exaggerate that benefit's apparent reversal.
+
+Our scope is one backbone, three fixed benchmarks and released semantic
+inputs with incompletely verified generation provenance. Dataset-specific
+batch sizes and patience prevent attributing all differences to dataset
+identity. The diagnostics neither optimize model performance nor establish
+equivalence. Removing a loss also changes shared-projector supervision and
+total alignment pressure.
+
+Historical results and logs carry source and data digests, but complete
+source bytes are not recovered for every run, including the follow-up
+diagnostics. The original weight grid has a preserved pre-run snapshot.
+The artifact distinguishes these evidence levels and retains all scores,
+checksummed manifests, current code and table-generation scripts.
+Removing user alignment still leaves collaborative user histories and
+potentially user-authored item reviews in use. We establish no new-user
+cold-start, privacy or profile-generation-cost benefit.
+
+\paragraph{Artifact access.} The software artifact supplies the implementation,
+result manifests, archived controls and analysis scripts. It also contains
+manuscript sources and the source snapshot for the weight grid. The README
+separates table regeneration, input checks and training. Raw datasets and
+semantic arrays must be obtained from RLMRec. The package manifest records
+the exact bytes supplied with these manuscripts.
+
+\paragraph{AI assistance.} OpenAI Codex assisted with study framing, code and
+statistical checks, execution of the validation-only sensitivity grid,
+literature searches, and manuscript drafting. Reported numerical results
+come from the archived training outputs and analysis scripts. This
+assistance does not replace author review or responsibility for the work.
+
+\clearpage
+\begin{thebibliography}{8}
+\bibitem{rlmrec} Ren, X., Wei, W., Xia, L., Su, L., Cheng, S., Wang, J., Yin, D.,
+Huang, C.: Representation Learning with Large Language Models for Recommendation.
+In: The Web Conference (2024). \doi{10.1145/3589334.3645458}
+\bibitem{freedom} Zhou, X., Shen, Z.: A Tale of Two Graphs: Freezing and Denoising
+Graph Structures for Multimodal Recommendation. In: ACM Multimedia (2023).
+\doi{10.1145/3581783.3611943}
+\bibitem{lightgcn} He, X., Deng, K., Wang, X., Li, Y., Zhang, Y., Wang, M.:
+LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation.
+In: SIGIR (2020). \doi{10.1145/3397271.3401063}
+\bibitem{alpharec} Sheng, L., Zhang, A., Zhang, Y., Chen, Y., Wang, X., Chua, T.-S.:
+Language Representations Can Be What Recommenders Need: Findings and Potentials.
+In: ICLR (2025). \url{https://openreview.net/forum?id=eIJfOIMN9z}
+\end{thebibliography}
+\end{document}

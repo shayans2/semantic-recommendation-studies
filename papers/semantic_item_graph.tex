@@ -1,0 +1,322 @@
+\documentclass[runningheads]{llncs}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,booktabs,graphicx}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdfauthor={Shayan Bemanian}}
+\input{generated/results_rows.tex}
+\input{generated/graph_main_rows.tex}
+\input{generated/graph_paired_rows.tex}
+\input{generated/graph_alone_rows.tex}
+\input{generated/permutation_rows.tex}
+\title{A Hybrid Framework for Recommendation via LLM Semantic Anchoring and Static Graph Filtering}
+\titlerunning{LLM Semantic Anchoring and Static Graph Filtering}
+\author{Shayan Bemanian}
+\authorrunning{Shayan Bemanian}
+\institute{}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We combine a frozen semantic item graph with item-side contrastive alignment,
+using RLMRec's released semantic embeddings.
+Over five paired seeds, our framework improves test Recall@20 over full RLMRec
+by $0.00705$ on Amazon-book and $0.00474$ on Steam, and loses by $0.00281$
+on Yelp. The direction is consistent across all five seeds on each dataset.
+Steam inherits Amazon's model hyperparameters, with a different batch size and
+stopping budget. Exploratory controls show that removing alignment can retain
+a validation advantage over selected baselines, while permuting item labels
+on the graph reduces performance. Those controls differ in protocol and do
+not isolate the complete mechanism of the main-test advantage. We report the
+Yelp loss explicitly; a recorded semantic-agreement prediction failed on
+Steam, leaving the cross-dataset boundary unresolved.
+\keywords{Recommendation \and Language models \and Graph neural networks \and
+Semantic item graphs}
+\end{abstract}
+
+\section{Introduction}
+RLMRec aligns collaborative representations with semantic vectors obtained
+from generated user and item profiles~\cite{rlmrec}. The same item vectors
+can also define a similarity graph that supplies information during
+propagation, following the frozen-graph idea in FREEDOM~\cite{freedom}.
+These uses are complementary: one changes the training objective and the
+other changes the representation computed by the model.
+
+Our framework combines a frozen cosine nearest-neighbour item
+graph with an item-side alignment loss and a LightGCN collaborative branch.
+We compare it with full and item-only RLMRec-Con on Amazon-book, Yelp and
+Steam using the same released semantic inputs. Main model comparisons share
+a dataset's evaluation and stopping protocol, but the recipes differ in
+several architectural and objective choices. Their performance difference
+cannot be attributed solely to the addition of an item graph.
+
+The result is a consistent but conditional advantage: the hybrid framework beats
+full RLMRec on Amazon and Steam and trails it on Yelp. Steam uses model
+hyperparameters transferred from Amazon without a Steam-specific sweep;
+its training batch and patience differ from Amazon's. Supporting experiments
+remove the alignment loss or permute graph labels to examine how the recipe
+uses item semantics. We distinguish these exploratory controls from the
+five-seed test comparisons. They motivate further investigation but do not
+explain why the recipe loses to RLMRec on Yelp.
+
+\section{Method}
+\paragraph{Backbone and objective.}
+Let $B$ training triples $(u,i,j)$ contain an observed item $i$ and a sampled
+negative $j$. With collaborative embeddings $h$ and $\hat y_{ui}=h_u^\top h_i$,
+the averaged BPR loss is
+\begin{equation}
+ \overline{\mathcal L}_{\rm BPR}=\frac{1}{B}\sum_{(u,i,j)}
+ \operatorname{softplus}(\hat y_{uj}-\hat y_{ui}).
+\end{equation}
+RLMRec-Con adds batch-averaged cosine InfoNCE terms on users and on positive
+and negative items, through a shared two-layer projector that maps frozen
+1536-dimensional semantic vectors into the collaborative dimension. The full
+objective is $\mathcal L_{\rm full}=\overline{\mathcal L}_{\rm BPR}
++\alpha(\overline{\mathcal L}_u+\overline{\mathcal L}_{i^+}
++\overline{\mathcal L}_{i^-})+\beta\|\Theta\|_2^2$, and dropping
+$\overline{\mathcal L}_u$ gives the item-only variant.
+
+\paragraph{Frozen semantic item graph.}
+The hybrid framework builds a cosine top-$k$ graph $S$ over the item semantic vectors,
+excluding self-links, takes the binary symmetric union and normalises it as
+$D^{-1/2}SD^{-1/2}$. Item ID embeddings propagate once over this fixed graph and
+their unit-normalised output is added to the collaborative item embeddings. The
+collaborative branch uses mean layer readout and samples $80\%$ of training
+edges per epoch with weights proportional to $1/\sqrt{d_ud_i}$; evaluation uses
+the complete training graph. Alignment, when enabled, applies only to positive
+items' fused representations. Setting $\alpha=0$ removes the alignment term
+entirely and leaves the graph as the only semantic input.
+
+\paragraph{Relation to prior recipes.}
+Semantic and learned item graphs are established: LATTICE learns item relations
+from side features~\cite{lattice}, FREEDOM freezes them and samples the
+collaborative graph~\cite{freedom}, and SAGERec constructs an LLM-derived item
+graph for sequential recommendation~\cite{sagerec}. AlphaRec shows that item
+language representations alone support strong recommendation~\cite{alpharec}.
+Our contribution is not the idea of a semantic item graph but the comparison of complete recipes against profile alignment on shared
+inputs and a matched main-comparison protocol within each dataset.
+
+We audited our implementation against the released FREEDOM code and record the
+differences rather than claiming a reproduction. Ours excludes self-links where
+upstream leaves them eligible, symmetrises before normalising where upstream applies a
+directed row normalisation, unit-normalises the structural output before
+addition, prunes $20\%$ of edges where upstream drops $80$--$90\%$, and replaces
+upstream's feature-level BPR terms with an InfoNCE term on a single frozen
+semantic modality. The resulting framework is FREEDOM-inspired, not
+FREEDOM with different features, and our results do not speak to the performance
+of the original model.
+
+\section{Experimental Design}
+\paragraph{Data and protocol.}
+We use RLMRec's released interaction matrices and semantic embeddings for all
+three benchmarks: Amazon-book (11,000 users, 9,332 items, 120,464 training
+interactions), Yelp (11,091 / 11,010 / 166,620) and Steam (23,310 / 5,237 /
+316,190). Splits are approximately 60/20/20 and we verified that the three
+matrices share no nonzero pair on any dataset, and that every semantic array has
+the expected entity count and 1,536 finite dimensions. Collaborative adjacency
+uses training data only. All-ranking evaluation masks training positives;
+validation positives remain eligible test candidates. Evaluation
+metrics are macro-averaged over users with positives in the evaluated split.
+
+We cannot verify a complete split-filtered generation history for the released
+profiles. The upstream description cites GPT-3.5-turbo and text-embedding-ada-002,
+but published examples are not generation logs. Our results are conditional on
+these fixed inputs; disjoint interaction splits do not certify the absence of
+contamination upstream.
+
+\paragraph{Configurations.}
+All compared models use 32-dimensional collaborative embeddings, three
+collaborative layers, Adam at learning rate $10^{-3}$ and no optimiser weight
+decay. RLMRec variants use $\alpha=0.01$, temperature $0.2$, keep rate $0.8$ and
+$\beta=10^{-7}$. Batch size is 1024 on Amazon and 4096 on Yelp and Steam, fixed
+within each dataset; cross-dataset behaviour is therefore not an isolated effect
+of dataset identity. The hybrid framework uses $\alpha=0.03,k=10$ on Amazon and
+$\alpha=0.1,k=20$ on Yelp, with one item-graph layer and pruning ratio $0.2$.
+
+Steam inherits Amazon's model hyperparameters, including $\alpha$, $k$,
+embedding dimension, layer counts, temperature, regularization and pruning.
+Its batch size and stopping budget differ. The recorded study transferred
+this recipe without a Steam-specific model hyperparameter sweep; each
+confirmation run evaluates the test set once at its best validation checkpoint.
+Earlier Steam development runs and historical tests remain in the artifact.
+This is retrospective transfer evidence, not a claim of an untouched test set
+or a fully preregistered study.
+
+\paragraph{Stopping and checkpoint selection.}
+Validation Recall@20 is evaluated every three epochs. Patience is five
+non-improving checks for the Amazon and Yelp main comparisons and 25 for
+Steam, matched across the four models within each dataset. The best checkpoint
+is restored before one final test evaluation per run. All 60 manifest runs
+ended by early stopping. The paired seeds are 1, 7, 13, 42 and 2024.
+
+Separate Yelp diagnostics at RLMRec weight $\alpha=0.03$ show that increasing
+patience from five to 20 permits recovery from an early low-score phase.
+They are validation-only follow-ups and do not replace the main comparisons
+at $\alpha=0.01$. This finding cautions that a matched stopping rule need not
+be equally suitable for different optimization trajectories. We have not
+repeated all main comparisons under alternative patience values.
+
+\paragraph{Uncertainty and repeatability.}
+We report sample standard deviations and pointwise paired 95\% Student-$t$
+intervals over five seeds. Holm adjustment covers twelve contrasts per
+metric: full and item-only versus LightGCN, and item-only and the hybrid framework
+versus full, on each of the three datasets. We also report exhaustive two-sided
+sign-flip values; their minimum with five pairs is $0.0625$.
+
+Four repeated executions per RLMRec variant at Amazon seed 42 give Recall@20
+SDs of $0.000536$ for full and $0.000344$ for item-only. This establishes
+execution variation at that particular setting, including variation when the
+selected epoch is unchanged. It does not establish a universal detection
+threshold or quantify noise on Yelp and Steam. Main uncertainty is assessed
+with the paired seed intervals, not a threshold extrapolated from these repeats.
+
+\section{Results}
+\begin{table}[t]
+\caption{Test Recall and NDCG at 20, mean $\pm$ sample standard deviation over
+five paired seeds. Batch size is matched within each dataset. Steam model hyperparameters transfer from Amazon; batch size and patience differ.}
+\label{tab:main}
+\centering\small
+\begin{tabular}{llrr}
+\toprule Dataset & Model & Recall@20 & NDCG@20\\\midrule
+\CleanGraphMainRows
+\bottomrule\end{tabular}
+\end{table}
+
+\paragraph{The graph recipe against profile alignment.}
+Table~\ref{tab:effects} gives the paired differences. The hybrid framework exceeds full
+RLMRec by $0.00705$ Recall@20 on Amazon (4.8\% relative) and $0.00474$ on Steam
+(3.3\% relative), and falls below it by $0.00281$ on Yelp (2.3\% relative).
+The direction holds in all five seeds per dataset. All three paired $t$
+comparisons survive the stated Holm adjustment; the exact sign-flip values
+are $0.0625$, so significance depends on the parametric analysis.
+
+The Steam margin is evidence that the Amazon model recipe can transfer to
+a further benchmark without a new model hyperparameter sweep. It does not
+remove the unequal development histories: Yelp received validation tuning,
+Amazon was the development benchmark, and Steam uses a longer stopping budget.
+
+\begin{table}[t]
+\caption{Hybrid framework minus full RLMRec, test Recall@20 over five seeds.
+Pointwise paired $t$ intervals; $p_h$ is Holm-adjusted within the twelve-contrast
+family, and $p_s$ is the exact two-sided sign-flip value.}
+\label{tab:effects}
+\centering\small
+\begin{tabular}{lrrrr}
+\toprule Dataset & Difference & 95\% $t$ interval & $p_h$ & $p_s$\\\midrule
+\CleanGraphPairedRows
+\bottomrule\end{tabular}
+\end{table}
+
+\paragraph{Removing alignment: exploratory evidence.}
+Table~\ref{tab:graphalone} reports development-seed validation scores after
+setting $\alpha=0$. On Amazon and Steam the recipe exceeds the listed
+LightGCN and item-only baselines, whereas on Yelp it falls below both.
+These are single-seed diagnostics, not five-seed test results or comparisons
+with full RLMRec. They also have unequal patience on Amazon and Yelp:
+Amazon uses 5/5/25 checks for LightGCN/item-only/graph, Yelp 25/5/5, and
+Steam 25/25/25. Thus only Steam matches patience across these rows.
+Other recipe differences remain even when alignment is removed, so the
+contrasts do not isolate a causal effect of graph structure alone.
+
+\begin{table}[t]
+\caption{Validation Recall@20 on development seed 2023 with alignment switched
+off ($\alpha=0$), against LightGCN and item-only RLMRec. Batch size is
+1024 on Amazon and 4096 on Yelp and Steam; patience differs as stated in text.}
+\label{tab:graphalone}
+\centering\small
+\begin{tabular}{lrrrrr}
+\toprule
+Dataset & LightGCN & Item-only & Graph, $\alpha=0$ & $-$LightGCN & $-$Item-only\\
+\midrule
+\PublicationGraphAloneRows
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Graph-label permutation controls.}
+An isomorphic relabelling keeps the graph topology and degree multiset while
+changing the correspondence between items and neighbourhoods.
+Table~\ref{tab:permutation} shows lower scores after this intervention on all
+three datasets. The Amazon row is a five-seed 64D test comparison with legacy
+provenance limitations; Yelp and Steam are single-seed 32D validation
+comparisons. These rows do not form one matched three-dataset experiment.
+
+On Steam, without alignment, the permuted recipe reaches $0.13549$ compared
+with $0.14462$ for the real graph and $0.13594$ for LightGCN. The real and
+permuted runs select epoch indices 357 and 324. This supports the relevance
+of item-to-neighbourhood correspondence in that setting. It does not prove
+that all of the main-test gain is semantic, rule out optimization effects,
+or explain the Yelp comparison with RLMRec.
+
+\begin{table}[t]
+\caption{Isomorphic graph permutation: identical topology and degree multiset,
+reassigned item labels. Difference is permuted minus real. Settings differ
+across rows; the Amazon baseline has incomplete historical protocol metadata.}
+\label{tab:permutation}
+\centering\small
+\resizebox{\textwidth}{!}{\begin{tabular}{llrrr}
+\toprule
+Dataset & Setting & Real graph & Permuted & Difference\\
+\midrule
+\PublicationPermutationRows
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\section{Limitations and Conclusion}
+The Yelp loss is unexplained. We measured the agreement between each item's
+semantic neighbourhood and its collaborative co-occurrence, expecting it to
+predict where the graph helps, and recorded a prediction for Steam before its development runs. The prediction failed. A subsequent correction to that diagnostic's
+null distribution produced an ordering consistent with the outcomes, but
+selecting a measure after seeing three results is not evidence, and we do not
+present it as a mechanism. The artifact contains the original prediction, its
+falsification, and the correction.
+
+Our scope is one collaborative backbone, three released benchmarks, fixed
+offline semantic inputs and Apple MPS execution, for which fixed-seed execution variation was measured at one Amazon setting. Batch size and patience vary across datasets, so cross-dataset contrasts
+are not isolated effects of dataset identity. The Amazon and Yelp configurations have unequal tuning histories; the Steam model hyperparameters transfer without a new sweep, but
+the training protocol changes. We do not
+measure profile-generation cost, and removing user alignment does not remove
+user interaction data or address cold start, since item profiles may themselves
+be derived from user-authored text.
+
+The supported conclusion is that the proposed hybrid framework improves
+five-seed test performance over full RLMRec on Amazon-book and Steam and
+reduces it on Yelp under the recorded protocols. Alignment-removal and
+permutation diagnostics support further study of semantic graph correspondence,
+but their scope and mismatched settings prevent a complete causal account.
+The failed semantic-agreement prediction leaves the Yelp loss unresolved.
+
+\paragraph{Artifact and provenance.} The accompanying artifact includes all
+60 main results, their hash-checked manifest, per-seed statistics, graph
+controls, the recorded Steam prediction, the implementation audit and the
+scripts that regenerate the tables. It preserves the exact source snapshot
+for the separate alignment-weight study; complete historical source bytes
+are not recovered for every other run. Raw inputs are acquired separately
+from RLMRec, and their upstream generation history is incompletely verified.
+
+\paragraph{AI assistance.} AI assistants supported framing, code, statistical
+checks, experiment execution, literature search and drafting. All reported
+numbers come from archived training outputs and the artifact's analysis scripts.
+
+\clearpage
+\begin{thebibliography}{8}
+\bibitem{rlmrec} Ren, X., Wei, W., Xia, L., Su, L., Cheng, S., Wang, J., Yin, D.,
+Huang, C.: Representation Learning with Large Language Models for Recommendation.
+In: The Web Conference (2024). \doi{10.1145/3589334.3645458}
+\bibitem{freedom} Zhou, X., Shen, Z.: A Tale of Two Graphs: Freezing and Denoising
+Graph Structures for Multimodal Recommendation. In: ACM Multimedia (2023).
+\doi{10.1145/3581783.3611943}
+\bibitem{lightgcn} He, X., Deng, K., Wang, X., Li, Y., Zhang, Y., Wang, M.:
+LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation.
+In: SIGIR (2020). \doi{10.1145/3397271.3401063}
+\bibitem{alpharec} Sheng, L., Zhang, A., Zhang, Y., Chen, Y., Wang, X., Chua, T.-S.:
+Language Representations Can Be What Recommenders Need: Findings and Potentials.
+In: ICLR (2025). \url{https://openreview.net/forum?id=eIJfOIMN9z}
+\bibitem{lattice} Zhang, J., Zhu, Y., Liu, Q., Wu, S., Wang, S., Wang, L.:
+Mining Latent Structures for Multimedia Recommendation. In: ACM Multimedia (2021).
+\doi{10.1145/3474085.3475259}
+\bibitem{sagerec} Cui, W., Lam, H.-K.: SAGERec: Semantic-Aware Global Graph-Enhanced Representation
+Learning for Sequential Recommendation. Electronics \textbf{14}(24), 4844 (2025).
+\doi{10.3390/electronics14244844}
+\end{thebibliography}
+\end{document}

@@ -1,0 +1,491 @@
+datasets:
+  yelp:
+    data_dir: "./data/yelp"
+    train_file: "trn_mat.pkl"
+    val_file: "val_mat.pkl"
+    test_file: "tst_mat.pkl"
+
+    user_num: 11091
+    item_num: 11010
+    epoch: 3000
+    learning_rate: 1.0e-3
+    weight_decay: 0
+    batch_size: 1024
+    patience: 5
+
+    models:
+      # Yelp residual bridges: item-only RLMRec plus exactly one FREEDOM
+      # training choice each, at the published 32D protocol. Combined applies
+      # all three at FREEDOM's yelp-selected KD weight, mirroring the amazon
+      # residual_bridge_pilot design.
+      RLMRec_Bridge_PosOnly_32:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      RLMRec_Bridge_Mean_32:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      RLMRec_Bridge_DegreePrune_32:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+          rho: 0.2
+      RLMRec_Bridge_Combined_32:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-1
+          kd_temperature: 0.2
+          rho: 0.2
+      LightGCN_RLMRec_64:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+      LightGCN_plus_RLMRec_64:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      RLMRec_ItemOnly_32:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      RLMRec_ItemOnly_64:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN_RLMRec_Exact:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+      LightGCN_plus_RLMRec_Exact:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      RLMRec_Coverage:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+          profile_coverage: 1.0
+      SIG_PermutedGraph:
+        hyperparameters:
+          embedding_size: 64
+          layer_num: 3          # L_ui, collaborative graph
+          ii_layer_num: 1       # L_ii, frozen item-item graph
+          knn_k: 10             # neighbours per item
+          rho: 0.2              # fraction of edges pruned per epoch
+          reg_weight: 1.0e-7    # beta
+          kd_weight: 3.0e-2     # alpha
+          kd_temperature: 0.2   # tau
+      SIG_RandomGraph:
+        hyperparameters:
+          embedding_size: 64
+          layer_num: 3          # L_ui, collaborative graph
+          ii_layer_num: 1       # L_ii, frozen item-item graph
+          knn_k: 10             # neighbours per item
+          rho: 0.2              # fraction of edges pruned per epoch
+          reg_weight: 1.0e-7    # beta
+          kd_weight: 3.0e-2     # alpha
+          kd_temperature: 0.2   # tau
+      SIG_NoStructural:
+        hyperparameters:
+          embedding_size: 64
+          layer_num: 3          # L_ui, collaborative graph
+          ii_layer_num: 1       # L_ii, frozen item-item graph
+          knn_k: 10             # neighbours per item
+          rho: 0.2              # fraction of edges pruned per epoch
+          reg_weight: 1.0e-7    # beta
+          kd_weight: 3.0e-2     # alpha
+          kd_temperature: 0.2   # tau
+      SIG_NoPrune:
+        hyperparameters:
+          embedding_size: 64
+          layer_num: 3          # L_ui, collaborative graph
+          ii_layer_num: 1       # L_ii, frozen item-item graph
+          knn_k: 10             # neighbours per item
+          rho: 0.2              # fraction of edges pruned per epoch
+          reg_weight: 1.0e-7    # beta
+          kd_weight: 3.0e-2     # alpha
+          kd_temperature: 0.2   # tau
+      LightGCN_plus_RLMRec:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN_plus:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN_latest:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN_multimodal:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN_image:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN_lattice:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+      SIG:
+        hyperparameters:
+          embedding_size: 64
+          layer_num: 3          # L_ui, collaborative graph
+          ii_layer_num: 1       # L_ii, frozen item-item graph
+          knn_k: 10             # neighbours per item
+          rho: 0.2              # fraction of edges pruned per epoch
+          reg_weight: 1.0e-7    # beta
+          kd_weight: 3.0e-2     # alpha
+          kd_temperature: 0.2   # tau
+      SIG_PosNegAnchor:
+        hyperparameters:
+          embedding_size: 64
+          layer_num: 3
+          ii_layer_num: 1
+          knn_k: 10
+          rho: 0.2
+          reg_weight: 1.0e-7
+          kd_weight: 3.0e-2
+          kd_temperature: 0.2
+
+  amazon:
+    data_dir: "./data/amazon"
+    train_file: "trn_mat.pkl"
+    val_file: "val_mat.pkl"
+    test_file: "tst_mat.pkl"
+
+    user_num: 11000
+    item_num: 9332
+    epoch: 3000
+    learning_rate: 1.0e-3
+    weight_decay: 0
+    batch_size: 1024
+    patience: 5
+
+    models:
+      LightGCN_RLMRec_64:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+      LightGCN_plus_RLMRec_64:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 3.0e-3
+          kd_temperature: 0.2
+      RLMRec_ItemOnly_32:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      RLMRec_ItemOnly_64:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 3.0e-3
+          kd_temperature: 0.2
+      RLMRec_Bridge_PosOnly_64:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 3.0e-3
+          kd_temperature: 0.2
+      RLMRec_Bridge_Mean_64:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 3.0e-3
+          kd_temperature: 0.2
+      RLMRec_Bridge_DegreePrune_64:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 3.0e-3
+          kd_temperature: 0.2
+          rho: 0.2
+      RLMRec_Bridge_Combined_64:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 3.0e-2
+          kd_temperature: 0.2
+          rho: 0.2
+      LightGCN_RLMRec_Exact:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+      LightGCN_plus_RLMRec_Exact:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      RLMRec_Coverage:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+          profile_coverage: 1.0
+      SIG_PermutedGraph:
+        hyperparameters:
+          embedding_size: 64
+          layer_num: 3          # L_ui, collaborative graph
+          ii_layer_num: 1       # L_ii, frozen item-item graph
+          knn_k: 10             # neighbours per item
+          rho: 0.2              # fraction of edges pruned per epoch
+          reg_weight: 1.0e-7    # beta
+          kd_weight: 3.0e-2     # alpha
+          kd_temperature: 0.2   # tau
+      SIG_RandomGraph:
+        hyperparameters:
+          embedding_size: 64
+          layer_num: 3          # L_ui, collaborative graph
+          ii_layer_num: 1       # L_ii, frozen item-item graph
+          knn_k: 10             # neighbours per item
+          rho: 0.2              # fraction of edges pruned per epoch
+          reg_weight: 1.0e-7    # beta
+          kd_weight: 3.0e-2     # alpha
+          kd_temperature: 0.2   # tau
+      SIG_NoStructural:
+        hyperparameters:
+          embedding_size: 64
+          layer_num: 3          # L_ui, collaborative graph
+          ii_layer_num: 1       # L_ii, frozen item-item graph
+          knn_k: 10             # neighbours per item
+          rho: 0.2              # fraction of edges pruned per epoch
+          reg_weight: 1.0e-7    # beta
+          kd_weight: 3.0e-2     # alpha
+          kd_temperature: 0.2   # tau
+      SIG_NoPrune:
+        hyperparameters:
+          embedding_size: 64
+          layer_num: 3          # L_ui, collaborative graph
+          ii_layer_num: 1       # L_ii, frozen item-item graph
+          knn_k: 10             # neighbours per item
+          rho: 0.2              # fraction of edges pruned per epoch
+          reg_weight: 1.0e-7    # beta
+          kd_weight: 3.0e-2     # alpha
+          kd_temperature: 0.2   # tau
+      LightGCN_plus_RLMRec:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN_plus:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN_latest:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN_multimodal:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN_image:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN_lattice:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      LightGCN:
+        hyperparameters:
+          embedding_size: 64
+          keep_rate: 0.8
+          layer_num: 2
+          reg_weight: 1.0e-7
+      SIG:
+        hyperparameters:
+          embedding_size: 64
+          layer_num: 3          # L_ui, collaborative graph
+          ii_layer_num: 1       # L_ii, frozen item-item graph
+          knn_k: 10             # neighbours per item
+          rho: 0.2              # fraction of edges pruned per epoch
+          reg_weight: 1.0e-7    # beta
+          kd_weight: 3.0e-2     # alpha
+          kd_temperature: 0.2   # tau
+
+  # Third RLMRec dataset, from the same Nov 2023 release as amazon and yelp.
+  # Added to test a prediction made from the semantic-agreement diagnostic
+  # before any steam model was trained, not to search for a better outcome.
+  # Protocol mirrors the published yelp settings; no steam hyperparameter has
+  # been tuned, and SIG's kd_weight carries amazon's value unchanged.
+  steam:
+    data_dir: "./data/steam"
+    train_file: "trn_mat.pkl"
+    val_file: "val_mat.pkl"
+    test_file: "tst_mat.pkl"
+
+    user_num: 23310
+    item_num: 5237
+    epoch: 3000
+    learning_rate: 1.0e-3
+    weight_decay: 0
+    batch_size: 4096
+    patience: 5
+
+    models:
+      LightGCN_RLMRec_Exact:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+      LightGCN_plus_RLMRec_Exact:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      RLMRec_ItemOnly_32:
+        hyperparameters:
+          embedding_size: 32
+          keep_rate: 0.8
+          layer_num: 3
+          reg_weight: 1.0e-7
+          kd_weight: 1.0e-2
+          kd_temperature: 0.2
+      SIG:
+        hyperparameters:
+          embedding_size: 32
+          layer_num: 3          # L_ui, collaborative graph
+          ii_layer_num: 1       # L_ii, frozen item-item graph
+          knn_k: 10             # neighbours per item
+          rho: 0.2              # fraction of edges pruned per epoch
+          reg_weight: 1.0e-7    # beta
+          kd_weight: 3.0e-2     # alpha, amazon's value, untuned for steam
+          kd_temperature: 0.2   # tau
+      SIG_PermutedGraph:
+        hyperparameters:
+          embedding_size: 32
+          layer_num: 3
+          ii_layer_num: 1
+          knn_k: 10
+          rho: 0.2
+          reg_weight: 1.0e-7
+          kd_weight: 3.0e-2
+          kd_temperature: 0.2

@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Local data and training artifacts
+data/
+output/
+*.pkl
+*.pth
+*.pt
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
+
+# LaTeX intermediates
+papers/*.aux
+papers/*.log
+papers/*.out
+papers/*.synctex.gz
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example

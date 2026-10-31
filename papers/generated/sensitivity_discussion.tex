@@ -1,0 +1,8 @@
+The artifact reports every original grid cell. On Amazon,
+the item-only minus full difference changes from $-0.00184$ at $\alpha=0.003$
+to $+0.00020$ at $0.01$ and $+0.00359$ at $0.03$. On Yelp the models are
+close at the two smaller weights. At $0.03$, full RLMRec selects epoch 0 and
+stops after 16 training epochs, while item-only reaches $0.11889$.
+This large gap motivates the stopping diagnostic below. The grid does not
+support a weight-independent claim about the user loss or provide test
+performance for newly tuned models.
