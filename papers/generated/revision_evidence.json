@@ -1,0 +1,408 @@
+{
+  "amazon_protocols": {
+    "32D_b4096": {
+      "means": {
+        "lightgcn": [
+          0.14033679466036367,
+          0.08563053289564583
+        ],
+        "full": [
+          0.14768207668030803,
+          0.08997413792510865
+        ],
+        "item": [
+          0.14819180654510178,
+          0.0902706139533753
+        ]
+      },
+      "item_minus_full": {
+        "recall20": {
+          "seeds": [
+            1,
+            7,
+            13,
+            42,
+            2023
+          ],
+          "diff": 0.0005097298647937454,
+          "ci": [
+            -0.002085119901559809,
+            0.0031045796311472995
+          ],
+          "p_t": 0.6144645626225067,
+          "p_sign": 0.6875
+        },
+        "ndcg20": {
+          "seeds": [
+            1,
+            7,
+            13,
+            42,
+            2023
+          ],
+          "diff": 0.0002964760282666512,
+          "ci": [
+            -0.0013130792110005334,
+            0.0019060312675338357
+          ],
+          "p_t": 0.6359980422343805,
+          "p_sign": 0.6875
+        }
+      },
+      "full_minus_lightgcn_recall20": {
+        "seeds": [
+          1,
+          7,
+          13,
+          42,
+          2023
+        ],
+        "diff": 0.007345282019944349,
+        "ci": [
+          0.0030182790275019387,
+          0.01167228501238676
+        ],
+        "p_t": 0.009218234058699346,
+        "p_sign": 0.0625
+      }
+    },
+    "32D_b1024": {
+      "means": {
+        "lightgcn": [
+          0.1386351504868913,
+          0.08487883910732323
+        ],
+        "full": [
+          0.14650511230148827,
+          0.08943360447384018
+        ],
+        "item": [
+          0.1462391582296436,
+          0.0894502674919659
+        ]
+      },
+      "item_minus_full": {
+        "recall20": {
+          "seeds": [
+            1,
+            7,
+            13,
+            42,
+            2024
+          ],
+          "diff": -0.0002659540718446873,
+          "ci": [
+            -0.001824853430641539,
+            0.001292945286952164
+          ],
+          "p_t": 0.6604290370572632,
+          "p_sign": 0.6875
+        },
+        "ndcg20": {
+          "seeds": [
+            1,
+            7,
+            13,
+            42,
+            2024
+          ],
+          "diff": 1.666301812571491e-05,
+          "ci": [
+            -0.0006143759778372223,
+            0.0006477020140886521
+          ],
+          "p_t": 0.9450760297184254,
+          "p_sign": 0.9375
+        }
+      },
+      "full_minus_lightgcn_recall20": {
+        "seeds": [
+          1,
+          7,
+          13,
+          42,
+          2024
+        ],
+        "diff": 0.007869961814597,
+        "ci": [
+          0.004319475223976168,
+          0.011420448405217831
+        ],
+        "p_t": 0.0035369762583732697,
+        "p_sign": 0.0625
+      }
+    },
+    "64D_b1024": {
+      "means": {
+        "lightgcn": [
+          0.15284568197533352,
+          0.09467985936970151
+        ],
+        "full": [
+          0.15688657319402505,
+          0.09744701921181655
+        ],
+        "item": [
+          0.1568812869921574,
+          0.09790043132479999
+        ]
+      },
+      "item_minus_full": {
+        "recall20": {
+          "seeds": [
+            1,
+            7,
+            13,
+            42,
+            2024
+          ],
+          "diff": -5.286201867654716e-06,
+          "ci": [
+            -0.000986658191126761,
+            0.0009760857873914515
+          ],
+          "p_t": 0.9887839430877192,
+          "p_sign": 1.0
+        },
+        "ndcg20": {
+          "seeds": [
+            1,
+            7,
+            13,
+            42,
+            2024
+          ],
+          "diff": 0.00045341211298345065,
+          "ci": [
+            1.2682871348285597e-05,
+            0.0008941413546186157
+          ],
+          "p_t": 0.04609938637174258,
+          "p_sign": 0.125
+        }
+      },
+      "full_minus_lightgcn_recall20": {
+        "seeds": [
+          1,
+          7,
+          13,
+          42,
+          2024
+        ],
+        "diff": 0.0040408912186915445,
+        "ci": [
+          0.003137583996198735,
+          0.004944198441184354
+        ],
+        "p_t": 0.00024159553721861572,
+        "p_sign": 0.0625
+      }
+    }
+  },
+  "published_comparison": {
+    "amazon": {
+      "lightgcn": {
+        "ours": [
+          0.14033679466036367,
+          0.08563053289564583
+        ],
+        "published": [
+          0.1411,
+          0.0856
+        ],
+        "delta": [
+          -0.0007632053396363359,
+          3.0532895645835056e-05
+        ]
+      },
+      "full": {
+        "ours": [
+          0.14768207668030803,
+          0.08997413792510865
+        ],
+        "published": [
+          0.1483,
+          0.0903
+        ],
+        "delta": [
+          -0.0006179233196919598,
+          -0.0003258620748913532
+        ]
+      }
+    },
+    "yelp": {
+      "lightgcn": {
+        "ours": [
+          0.11295582135116268,
+          0.0712531579147814
+        ],
+        "published": [
+          0.1157,
+          0.0733
+        ],
+        "delta": [
+          -0.002744178648837317,
+          -0.002046842085218603
+        ]
+      },
+      "full": {
+        "ours": [
+          0.12269950106052467,
+          0.07688102748750753
+        ],
+        "published": [
+          0.123,
+          0.0776
+        ],
+        "delta": [
+          -0.00030049893947532713,
+          -0.0007189725124924773
+        ]
+      }
+    },
+    "steam": {
+      "lightgcn": {
+        "ours": [
+          0.1319230730830302,
+          0.08339562171293563
+        ],
+        "published": [
+          0.1348,
+          0.0855
+        ],
+        "delta": [
+          -0.0028769269169698075,
+          -0.0021043782870643762
+        ]
+      },
+      "full": {
+        "ours": [
+          0.1423798979720494,
+          0.09034029591386505
+        ],
+        "published": [
+          0.1421,
+          0.0902
+        ],
+        "delta": [
+          0.0002798979720493866,
+          0.0001402959138650517
+        ]
+      }
+    }
+  },
+  "steam_patience_replay": {
+    "lightgcn": {
+      "runs": [
+        {
+          "seed": 1,
+          "best_epoch": 81,
+          "longest_nonimproving": 2
+        },
+        {
+          "seed": 7,
+          "best_epoch": 78,
+          "longest_nonimproving": 3
+        },
+        {
+          "seed": 13,
+          "best_epoch": 69,
+          "longest_nonimproving": 2
+        },
+        {
+          "seed": 42,
+          "best_epoch": 69,
+          "longest_nonimproving": 1
+        },
+        {
+          "seed": 2024,
+          "best_epoch": 66,
+          "longest_nonimproving": 2
+        }
+      ],
+      "same_checkpoint_at_patience5": true
+    },
+    "rlmrec_full": {
+      "runs": [
+        {
+          "seed": 1,
+          "best_epoch": 36,
+          "longest_nonimproving": 3
+        },
+        {
+          "seed": 7,
+          "best_epoch": 27,
+          "longest_nonimproving": 0
+        },
+        {
+          "seed": 13,
+          "best_epoch": 27,
+          "longest_nonimproving": 0
+        },
+        {
+          "seed": 42,
+          "best_epoch": 27,
+          "longest_nonimproving": 0
+        },
+        {
+          "seed": 2024,
+          "best_epoch": 27,
+          "longest_nonimproving": 0
+        }
+      ],
+      "same_checkpoint_at_patience5": true
+    },
+    "item_only": {
+      "runs": [
+        {
+          "seed": 1,
+          "best_epoch": 24,
+          "longest_nonimproving": 0
+        },
+        {
+          "seed": 7,
+          "best_epoch": 24,
+          "longest_nonimproving": 0
+        },
+        {
+          "seed": 13,
+          "best_epoch": 24,
+          "longest_nonimproving": 0
+        },
+        {
+          "seed": 42,
+          "best_epoch": 24,
+          "longest_nonimproving": 0
+        },
+        {
+          "seed": 2024,
+          "best_epoch": 33,
+          "longest_nonimproving": 0
+        }
+      ],
+      "same_checkpoint_at_patience5": true
+    }
+  },
+  "yelp_bpr_plateau": {
+    "yelp_LightGCN_plus_RLMRec_Exact_alpha0.03_patience20_seed2023.log": {
+      "first_epoch_bpr_below": 23,
+      "epoch0_val_recall20": 0.0381,
+      "min_val_recall20_first_15_epochs": 0.0238
+    },
+    "yelp_LightGCN_plus_RLMRec_Exact_alpha0.03_patience20_seed2025.log": {
+      "first_epoch_bpr_below": 22,
+      "epoch0_val_recall20": 0.0379,
+      "min_val_recall20_first_15_epochs": 0.0228
+    },
+    "yelp_RLMRec_ItemOnly_32_alpha0.03_patience20_seed2023.log": {
+      "first_epoch_bpr_below": 7,
+      "epoch0_val_recall20": 0.0408,
+      "min_val_recall20_first_15_epochs": 0.0408
+    },
+    "yelp_RLMRec_ItemOnly_32_alpha0.03_patience20_seed2025.log": {
+      "first_epoch_bpr_below": 7,
+      "epoch0_val_recall20": 0.0421,
+      "min_val_recall20_first_15_epochs": 0.0421
+    }
+  }
+}
